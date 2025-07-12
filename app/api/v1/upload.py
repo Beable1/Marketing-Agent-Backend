@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, s
 from app.core.storage import upload_pdf
 from app.schemas.file import UploadResponse
 
+from app.tasks.ingestion import ingest_pdf_task
+
 router = APIRouter(tags=["Files"])
 
 # ✨ Basit tenant simülasyonu (gerçekte OAuth claim’den gelecek)
@@ -17,4 +19,5 @@ async def upload_pdf_endpoint(
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF allowed")
     key = upload_pdf(file, tenant_id, customer_id)
+    ingest_pdf_task.delay(key, tenant_id)
     return UploadResponse(key=key)

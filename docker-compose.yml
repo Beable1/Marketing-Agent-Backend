@@ -39,5 +39,17 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       S3_BUCKET: ${S3_BUCKET}
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # yönetim UI
+
+  worker:
+    build: .
+    command: celery -A worker.worker worker -Q ingestion,strategy --concurrency=4
+    depends_on: [api, rabbitmq]
+    env_file: .env
+
 volumes:
   minio-data:
